@@ -1,0 +1,37 @@
+version: 0.2
+
+env:
+  variables:
+    JAVA_HOME: /usr/lib/jvm/java-17-amazon-corretto/
+    IMAGES_DIR: smithy-cli/build/image
+
+phases:
+  install:
+    runtime-versions:
+      java: corretto17
+    commands:
+      # install any extra software needed to build
+      - yum update; yum install -y java-17-amazon-corretto-devel
+      - update-alternatives --auto javac
+      - update-alternatives --auto java
+  pre_build:
+    commands:
+      # You should add informational steps here (such as environment, debugging, etc)
+      - echo 'executing build with java version:'; java --version | sed 's/^/  /'
+      - echo 'executing build with smithy version:'; cat VERSION | sed 's/^/  /'
+  build:
+    commands:
+      # steps to build the artifacts should go here
+      - echo 'starting build...'
+      - ./gradlew :smithy-cli:runtime
+      - echo 'build complete...'
+  post_build:
+    commands:
+      # post-build steps like verification or logging can be performed here
+      - ls -lah $IMAGES_DIR
+      - ls -lah
+      - find $IMAGES_DIR -maxdepth 1 -mindepth 1 -type d -exec tar zcvf {}.tar.gz {} \;
+artifacts:
+  files:
+    # the entire project (files, build artifacts, etc.) will be the output of this build
+    - "**/*"

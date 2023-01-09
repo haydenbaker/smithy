@@ -1,0 +1,13 @@
+version: 0.2
+
+phases:
+  build:
+    commands:
+      # pre-flight steps go here (i.e validating latest tagged commit)
+      - echo 'Running pre-check steps...'
+      - git describe --exact-match --tags
+      - echo 'pre-check complete...'
+artifacts:
+  files:
+    # the entire project (files, build artifacts, etc.) will be the output of this build
+    - "**/*"

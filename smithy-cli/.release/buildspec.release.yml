@@ -1,0 +1,41 @@
+version: 0.2
+
+env:
+  variables:
+    ARTIFACTS_DIR: smithy-cli/build/image
+    SOURCE_REPO: haydenbaker/smithy
+  secrets-manager:
+    SOURCE_ACCESS_TOKEN: SourceAccessToken
+
+phases:
+  install:
+    runtime-versions:
+      ruby: 2.7
+    commands:
+      # install any extra software needed to perform the release
+      - gem install dpl --pre
+  pre_build:
+    commands:
+      # You should add informational steps here (such as environment, debugging, etc)
+      - echo 'executing release with ruby version:'; ruby --version | sed 's/^/  /'
+      - echo 'executing release with smithy version:'; cat VERSION | sed 's/^/  /'
+  build:
+    commands:
+      # steps to build the artifacts should go here
+      - echo 'starting release...'
+      - TAG=$(git describe --tags)
+      - VERSION=$(cat VERSION)
+      - |
+        if [ "$?" -eq 0 ] && [ "$TAG" = "$VERSION" ]
+        then
+          echo "VERSION($VERSION) and tag-version($TAG) match."
+        else
+          echo "VERSION($VERSION) and tag-version($TAG) mismatch!"
+          exit 1
+        fi
+      - dpl releases --api_key=$SOURCE_ACCESS_TOKEN --repo $SOURCE_REPO --name="Smithy CLI v$TAG" --release_notes='Changelog snippet should go here!' --file=$ARTIFACTS_DIR/* --file_glob
+      - echo 'release complete...'
+  post_build:
+    commands:
+      # post-build verification should be performed here
+      - ls -lah $ARTIFACTS_DIR
