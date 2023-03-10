@@ -16,6 +16,7 @@ jobs:
         with:
           fetch-depth: '0'
       - name: pull
+        run: |
           get pull https://github.com/awslabs/smithy.git
           git push
       - name: tag
