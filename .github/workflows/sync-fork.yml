@@ -11,8 +11,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: tgymnich/fork-sync@v1.8
+      - name: sync
+        uses: tgymnich/fork-sync@v1.8
         with:
           owner: awslabs
           base: main
           head: main
+      - name: checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: '0'
+      - name: tag
+        run: |
+          git fetch --tags https://github.com/awslabs/smithy.git
+          git push --tags
