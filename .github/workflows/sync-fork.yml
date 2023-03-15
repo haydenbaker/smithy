@@ -18,7 +18,7 @@ jobs:
           token: ${{ secrets.ACTION_TOKEN }}
       - name: pull
         run: |
-          git pull https://github.com/awslabs/smithy.git --ff-only
+          git pull https://github.com/awslabs/smithy.git --no-rebase
           git push
       - name: tag
         run: |
