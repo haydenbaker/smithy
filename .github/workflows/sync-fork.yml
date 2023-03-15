@@ -18,6 +18,8 @@ jobs:
           token: ${{ secrets.ACTION_TOKEN }}
       - name: pull
         run: |
+          git config --global user.email "github-aws-smithy-automation@amazon.com"
+          git config --global user.name "Smithy Automation"
           git pull https://github.com/awslabs/smithy.git --no-rebase
           git push
       - name: tag
