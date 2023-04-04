@@ -13,17 +13,15 @@
  * permissions and limitations under the License.
  */
 
-package software.amazon.smithy.cli;
+package software.amazon.smithy.cli.commands;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import software.amazon.smithy.cli.Arguments;
+import software.amazon.smithy.cli.Command;
 
-import org.junit.jupiter.api.Test;
-
-public class AnsiColorFormatterTest {
-    @Test
-    public void detectsIfColorIsEnabled() {
-        assertThat(AnsiColorFormatter.NO_COLOR.isColorEnabled(), is(false));
-        assertThat(AnsiColorFormatter.FORCE_COLOR.isColorEnabled(), is(true));
-    }
+/**
+ * A shared abstraction used to compose the {@link Command#execute(Arguments, Command.Env)} method of commands.
+ */
+@FunctionalInterface
+interface CommandAction {
+    int apply(Arguments arguments, Command.Env env);
 }
