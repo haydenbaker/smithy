@@ -13,6 +13,8 @@ jobs:
         run: |
           version="${GITHUB_REF##*/}"
           release_url="https://github.com/awslabs/smithy/releases/download/${version}/smithy-cli-darwin-x86_64.tar.gz"
+          echo $version
+          echo $release_url
           curl -JLO ${release_url}
           curl -JLO ${release_url}.sha256
       - name: Save artifacts
@@ -36,8 +38,9 @@ jobs:
       - name: Checkout bottle repo
         uses: actions/checkout@v2
         with:
-          repository: 'aws/homebrew-tap'
+          repository: 'haydenbaker/homebrew-tap'
           path: 'homebrew-tap'
+          ref: 'smithy-cli'
       - name: Update version
         run: |
           version="${GITHUB_REF##*/}"
@@ -76,5 +79,5 @@ jobs:
           push-to-fork: aws-smithy-automation/homebrew-tap
           title: ${{ steps.vars.outputs.pr_title }}
           body: ${{ steps.vars.outputs.pr_body }}
-          branch: "upgrade-copilot-${{ steps.vars.outputs.version }}"
-          token: ${{ secrets.ECS_CICD_BOT }}
+          branch: "upgrade-smithy-cli-${{ steps.vars.outputs.version }}"
+          token: ${{ secrets.ACTION_TOKEN }}
