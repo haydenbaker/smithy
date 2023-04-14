@@ -11,7 +11,7 @@ jobs:
       - name: mac
 #         if: startsWith(github.ref, 'refs/tags/')
         run: |
-          version="${GITHUB_REF##*/}"
+          version="1.30.0"
           release_url="https://github.com/awslabs/smithy/releases/download/${version}/smithy-cli-darwin-x86_64.tar.gz"
           echo $version
           echo $release_url
@@ -43,17 +43,17 @@ jobs:
           ref: 'smithy-cli'
       - name: Update version
         run: |
-          version="${GITHUB_REF##*/}"
+          version="1.30.0"
           tmp=$(mktemp)
           jq --arg version "${version}" '.version = $version' homebrew-tap/bottle-configs/smithy-cli.json > "$tmp" && mv "$tmp" homebrew-tap/bottle-configs/smithy-cli.json
       - name: Update root_url
         run: |
+          version="1.30.0"
           tmp=$(mktemp)
-          version="${GITHUB_REF##*/}"
           jq --arg version "${version}" '.bottle.root_url = "https://github.com/awslabs/smithy/releases/download/" + $version + "/smithy-cli"' homebrew-tap/bottle-configs/smithy-cli.json > "$tmp" && mv "$tmp" homebrew-tap/bottle-configs/smithy-cli.json
       - name: Update mac
         run: |
-          version="${GITHUB_REF##*/}"
+          version="1.30.0"
           sha=$(cut -d -f1 " " ${{steps.download.outputs.download-path}}/smithy-cli-darwin-x86_64.tar.gz.sha256)
           tmp=$(mktemp)
           jq --arg sha "$sha" '.bottle.sha256.sierra = "'$sha'"' homebrew-tap/bottle-configs/smithy-cli.json > "$tmp" && mv "$tmp" homebrew-tap/bottle-configs/smithy-cli.json
@@ -63,12 +63,12 @@ jobs:
           git config user.name 'aws-smithy-automation'
           git config user.email 'github-aws-smithy-automation@amazon.com'
           git add bottle-configs/smithy-cli.json
-          git commit -m "chore: upgrade smithy-cli to ${GITHUB_REF##*/}"
+          git commit -m "chore: upgrade smithy-cli to 1.30.0"
       - name: Set pull-request variables
         id: vars
         run: |
-          echo version="${GITHUB_REF##*/}" >> $GITHUB_OUTPUT
-          echo pr_title="chore: upgrade smithy-cli to ${GITHUB_REF##*/}" >> $GITHUB_OUTPUT
+          echo version="1.30.0" >> $GITHUB_OUTPUT
+          echo pr_title="chore: upgrade smithy-cli to 1.30.0" >> $GITHUB_OUTPUT
           echo pr_body="Created by ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" >> $GITHUB_OUTPUT
       - name: Create pull-request
         uses: peter-evans/create-pull-request@v3
