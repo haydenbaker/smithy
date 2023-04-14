@@ -15,8 +15,8 @@ jobs:
           release_url="https://github.com/awslabs/smithy/releases/download/${version}/smithy-cli-darwin-x86_64.tar.gz"
           echo $version
           echo $release_url
-          curl -JLO ${release_url}
-          curl -JLO ${release_url}.sha256
+          curl -fJLO ${release_url}
+          curl -fJLO ${release_url}.sha256
       - name: Save artifacts
         uses: actions/upload-artifact@v2
         with:
@@ -54,7 +54,7 @@ jobs:
       - name: Update mac
         run: |
           version="1.30.0"
-          sha=$(cut -d -f1 " " ${{steps.download.outputs.download-path}}/smithy-cli-darwin-x86_64.tar.gz.sha256)
+          sha=$(cut -d " " -f1 ${{steps.download.outputs.download-path}}/smithy-cli-darwin-x86_64.tar.gz.sha256)
           tmp=$(mktemp)
           jq --arg sha "$sha" '.bottle.sha256.sierra = "'$sha'"' homebrew-tap/bottle-configs/smithy-cli.json > "$tmp" && mv "$tmp" homebrew-tap/bottle-configs/smithy-cli.json
       - name: Create commits
