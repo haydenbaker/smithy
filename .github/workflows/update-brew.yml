@@ -80,4 +80,4 @@ jobs:
           title: ${{ steps.vars.outputs.pr_title }}
           body: ${{ steps.vars.outputs.pr_body }}
           branch: "upgrade-smithy-cli-${{ steps.vars.outputs.version }}"
-          token: ${{ secrets.ACTION_TOKEN }}
+          token: ${{ secrets.PR_TOKEN }}
