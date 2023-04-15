@@ -12,7 +12,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         run: |
           version="${GITHUB_REF##*/}"
-          release_url="https://github.com/awslabs/smithy/releases/download/${version}/smithy-cli-darwin-x86_64.tar.gz"
+          release_url="https://github.com/aws-smithy-automation/smithy/releases/download/${version}/smithy-cli-darwin-x86_64.tar.gz"
           echo $version
           echo $release_url
           curl -fJLO ${release_url}
@@ -21,7 +21,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         run: |
           version="${GITHUB_REF##*/}"
-          release_url="https://github.com/awslabs/smithy/releases/download/${version}/smithy-cli-darwin-aarch64.tar.gz"
+          release_url="https://github.com/aws-smithy-automation/smithy/releases/download/${version}/smithy-cli-darwin-aarch64.tar.gz"
           echo $version
           echo $release_url
           curl -fJLO ${release_url}
@@ -30,7 +30,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         run: |
           version="${GITHUB_REF##*/}"
-          release_url="https://github.com/awslabs/smithy/releases/download/${version}/smithy-cli-linux-x86_64.tar.gz"
+          release_url="https://github.com/aws-smithy-automation/smithy/releases/download/${version}/smithy-cli-linux-x86_64.tar.gz"
           echo $version
           echo $release_url
           curl -fJLO ${release_url}
@@ -39,7 +39,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         run: |
           version="${GITHUB_REF##*/}"
-          release_url="https://github.com/awslabs/smithy/releases/download/${version}/smithy-cli-linux-aarch64.tar.gz"
+          release_url="https://github.com/aws-smithy-automation/smithy/releases/download/${version}/smithy-cli-linux-aarch64.tar.gz"
           echo $version
           echo $release_url
           curl -fJLO ${release_url}
@@ -77,7 +77,7 @@ jobs:
         run: |
           version="${GITHUB_REF##*/}"
           tmp=$(mktemp)
-          jq --arg version "${version}" '.bottle.root_url = "https://github.com/awslabs/smithy/releases/download/" + $version + "/smithy-cli"' homebrew-tap/bottle-configs/smithy-cli.json > "$tmp" && mv "$tmp" homebrew-tap/bottle-configs/smithy-cli.json
+          jq --arg version "${version}" '.bottle.root_url = "https://github.com/aws-smithy-automation/smithy/releases/download/" + $version + "/smithy-cli"' homebrew-tap/bottle-configs/smithy-cli.json > "$tmp" && mv "$tmp" homebrew-tap/bottle-configs/smithy-cli.json
       - name: Update mac
         run: |
           version="${GITHUB_REF##*/}"
