@@ -40,7 +40,7 @@ jobs:
         with:
           repository: 'haydenbaker/homebrew-tap'
           path: 'homebrew-tap'
-          ref: 'smithy-cli'
+          ref: 'test'
       - name: Update version
         run: |
           version="1.30.0"
@@ -80,4 +80,4 @@ jobs:
           title: ${{ steps.vars.outputs.pr_title }}
           body: ${{ steps.vars.outputs.pr_body }}
           branch: "upgrade-smithy-cli-${{ steps.vars.outputs.version }}"
-          token: ${{ secrets.PR_TOKEN }}
+          token: ${{ secrets.ACTION_TOKEN }}
