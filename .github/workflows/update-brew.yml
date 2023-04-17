@@ -4,34 +4,37 @@ on:
     types: [released]
   workflow_dispatch: # on button click
   
-env:
-  REPO_URL: https://github.com/aws-smithy-automation/smithy
-  VERSION: "${GITHUB_REF##*/}"
-  RELEASE_URL: "${REPO_URL}/releases/download/${VERSION}"
-
 jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup environment
+        run: |
+          echo "REPO_URL=https://github.com/aws-smithy-automation/smithy" >> $GITHUB_ENV
+          echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
+          echo "RELEASE_URL=${REPO_URL}/releases/download/${VERSION}" >> $GITHUB_ENV
   download-and-save:
     runs-on: ubuntu-latest
     steps:
-      - name: mac
+      - name: Get mac hash
         if: startsWith(github.ref, 'refs/tags/')
         run: |
           hash_url="${RELEASE_URL}/smithy-cli-darwin-x86_64.tar.gz.sha256"
           echo $hash_url
           curl -fJLO $hash_url
-      - name: mac-arm
+      - name: Get mac-arm hash
         if: startsWith(github.ref, 'refs/tags/')
         run: |
           hash_url="${RELEASE_URL}/smithy-cli-darwin-aarch64.tar.gz.sha256"
           echo $hash_url
           curl -fJLO hash_url
-      - name: linux
+      - name: Get linux hash
         if: startsWith(github.ref, 'refs/tags/')
         run: |          
           hash_url="${RELEASE_URL}/smithy-cli-linux-x86_64.tar.gz.sha256"
           echo $hash_url
           curl -fJLO $hash_url
-      - name: linux-arm
+      - name: Get linux-arm hash
         if: startsWith(github.ref, 'refs/tags/')
         run: |          
           hash_url="${RELEASE_URL}/smithy-cli-linux-aarch64.tar.gz.sha256"
