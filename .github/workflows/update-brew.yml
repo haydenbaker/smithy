@@ -72,7 +72,7 @@ jobs:
         run: |
           version="${GITHUB_REF##*/}"
           tmp=$(mktemp)
-          jq --arg release_url "${{ env.release_prefix }}" --arg version "${version}" '.bottle.root_url = "$release_url/$version/smithy-cli"' homebrew-tap/bottle-configs/smithy-cli.json > "$tmp" && mv "$tmp" homebrew-tap/bottle-configs/smithy-cli.json
+          jq --arg release_url "${{ env.release_prefix }}" --arg version "${version}" '.bottle.root_url = "\($release_url)/\($version)/smithy-cli"' homebrew-tap/bottle-configs/smithy-cli.json > "$tmp" && mv "$tmp" homebrew-tap/bottle-configs/smithy-cli.json
       - name: Update mac
         run: |
           version="${GITHUB_REF##*/}"
