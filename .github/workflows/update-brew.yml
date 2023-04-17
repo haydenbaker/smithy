@@ -7,7 +7,7 @@ on:
 env:
   REPO_URL: https://github.com/aws-smithy-automation/smithy
   VERSION: "${GITHUB_REF##*/}"
-  RELEASE_URL: $REPO_URL/releases/download/$VERSION
+  RELEASE_URL: "${REPO_URL}/releases/download/${VERSION}"
 
 jobs:
   download-and-save:
