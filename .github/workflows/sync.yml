@@ -1,0 +1,28 @@
+name: Sync Fork
+
+on:
+  schedule:
+    - cron: '*/60 * * * *' # every 60 minutes
+  workflow_dispatch: # on button click
+
+jobs:
+  sync:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: '0'
+          token: ${{ secrets.ACTION_TOKEN }}
+      - name: pull
+        run: |
+          git config --global user.email "github-aws-smithy-automation@amazon.com"
+          git config --global user.name "Smithy Automation"
+          git pull https://github.com/awslabs/smithy.git --no-rebase
+          git push
+      - name: tag
+        run: |
+          git fetch --tags https://github.com/awslabs/smithy.git
+          git push --tags
