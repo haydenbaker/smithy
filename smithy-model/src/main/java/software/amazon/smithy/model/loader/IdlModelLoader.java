@@ -389,7 +389,23 @@ final class IdlModelLoader {
         }
     }
 
-    private void parseApplyStatement() {
+    private void parseApplyStatement(List<IdlTraitParser.Result> traits) {
+        // Detect if doc comments were found before the apply statement, and if so warn.
+        // If traits were attached to an apply statement then fail.
+        SourceLocation foundDocComments = null;
+
+        for (IdlTraitParser.Result trait : traits) {
+            if (trait.getTraitType() != IdlTraitParser.TraitType.DOC_COMMENT) {
+                throw syntax("Traits applied to apply statement");
+            } else {
+                foundDocComments = trait.getValue().getSourceLocation();
+            }
+        }
+
+        if (foundDocComments != null) {
+            LoaderUtils.emitBadDocComment(foundDocComments, null);
+        }
+
         tokenizer.expectCurrentLexeme("apply");
         tokenizer.next();
         tokenizer.expectAndSkipWhitespace();
@@ -425,32 +441,16 @@ final class IdlModelLoader {
     private void parseFirstShapeStatement(SourceLocation possibleDocCommentLocation) {
         if (tokenizer.getCurrentToken() != IdlToken.EOF) {
             try {
-                if (tokenizer.doesCurrentIdentifierStartWith('a')) {
-                    parseApplyStatement();
-                } else {
-                    List<IdlTraitParser.Result> traits;
-                    boolean hasDocComment = tokenizer.getCurrentToken() == IdlToken.DOC_COMMENT;
-
-                    if (possibleDocCommentLocation == null) {
-                        traits = IdlTraitParser.parseDocsAndTraitsBeforeShape(tokenizer, resolver);
-                    } else {
-                        // In this case, this is the first shape encountered for a model file that doesn't have any
-                        // use statements. We need to take the previously skipped documentation comments to parse
-                        // potential use statements and apply them to this first shape.
-                        String docLines = tokenizer.removePendingDocCommentLines();
-                        traits = IdlTraitParser.parseDocsAndTraitsBeforeShape(tokenizer, resolver);
-                        // Note that possibleDocCommentLocation is just a mark of where docs _could be_.
-                        if (docLines != null) {
-                            hasDocComment = true;
-                            traits.add(new IdlTraitParser.Result(DocumentationTrait.ID.toString(),
-                                                                 new StringNode(docLines, possibleDocCommentLocation),
-                                                                 IdlTraitParser.TraitType.DOC_COMMENT));
-                        }
-                    }
-
-                    if (parseShapeDefinition(traits, hasDocComment)) {
-                        parseShape(traits);
-                    }
+                tokenizer.skipWsAndDocs();
+                String docLines = tokenizer.removePendingDocCommentLines();
+                List<IdlTraitParser.Result> traits = IdlTraitParser.parseDocsAndTraitsBeforeShape(tokenizer, resolver);
+                if (docLines != null) {
+                    traits.add(new IdlTraitParser.Result(DocumentationTrait.ID.toString(),
+                                                         new StringNode(docLines, possibleDocCommentLocation),
+                                                         IdlTraitParser.TraitType.DOC_COMMENT));
+                }
+                if (parseShapeDefinition(traits, docLines != null)) {
+                    parseShapeOrApply(traits);
                 }
             } catch (ModelSyntaxException e) {
                 errorRecovery(e);
@@ -461,15 +461,10 @@ final class IdlModelLoader {
     private void parseSubsequentShapeStatements() {
         while (tokenizer.hasNext()) {
             try {
-                if (tokenizer.doesCurrentIdentifierStartWith('a')) {
-                    parseApplyStatement();
-                } else {
-                    List<IdlTraitParser.Result> traits;
-                    boolean hasDocComment = tokenizer.getCurrentToken() == IdlToken.DOC_COMMENT;
-                    traits = IdlTraitParser.parseDocsAndTraitsBeforeShape(tokenizer, resolver);
-                    if (parseShapeDefinition(traits, hasDocComment)) {
-                        parseShape(traits);
-                    }
+                boolean hasDocComment = tokenizer.getCurrentToken() == IdlToken.DOC_COMMENT;
+                List<IdlTraitParser.Result> traits = IdlTraitParser.parseDocsAndTraitsBeforeShape(tokenizer, resolver);
+                if (parseShapeDefinition(traits, hasDocComment)) {
+                    parseShapeOrApply(traits);
                 }
             } catch (ModelSyntaxException e) {
                 errorRecovery(e);
@@ -533,10 +528,16 @@ final class IdlModelLoader {
         }
     }
 
-    private void parseShape(List<IdlTraitParser.Result> traits) {
+    private void parseShapeOrApply(List<IdlTraitParser.Result> traits) {
         SourceLocation location = tokenizer.getCurrentTokenLocation();
         tokenizer.expect(IdlToken.IDENTIFIER);
         String shapeType = tokenizer.internString(tokenizer.getCurrentTokenLexeme());
+
+        if (shapeType.equals("apply")) {
+            parseApplyStatement(traits);
+            return;
+        }
+
         ShapeType type = ShapeType.fromString(shapeType)
                 .orElseThrow(() -> syntax("Unknown shape type: " + shapeType));
         tokenizer.next();
