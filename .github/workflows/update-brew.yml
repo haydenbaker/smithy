@@ -40,7 +40,7 @@ jobs:
           echo $hash_url
           curl -fJLO $hash_url.sha256
       - name: Save artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: brew-artifacts
           path: '*.sha256'
@@ -54,11 +54,11 @@ jobs:
     steps:
       - name: Get artifacts
         id: download
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: brew-artifacts
       - name: Checkout bottle repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: 'aws/homebrew-tap'
           path: 'homebrew-tap'
@@ -111,7 +111,7 @@ jobs:
           echo pr_title="chore: upgrade smithy-cli to ${GITHUB_REF##*/}" >> $GITHUB_OUTPUT
           echo pr_body="Created by ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" >> $GITHUB_OUTPUT
       - name: Create pull-request
-        uses: peter-evans/create-pull-request@v3
+        uses: peter-evans/create-pull-request@v5
         with:
           path: homebrew-tap
           delete-branch: true
