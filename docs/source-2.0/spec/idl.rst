@@ -177,13 +177,10 @@ string support defined in :rfc:`7405`.
     ShapeStatement          :`TraitStatements` `ShapeBody`
     ShapeBody               :`SimpleShapeStatement`
                             :/ `EnumStatement`
-                            :/ `ListStatement`
-                            :/ `MapStatement`
+                            :/ `AggregateShapeStatement`
                             :/ `StructureStatement`
-                            :/ `UnionStatement`
-                            :/ `ServiceStatement`
+                            :/ `EntityStatement`
                             :/ `OperationStatement`
-                            :/ `ResourceStatement`
     SimpleShapeStatement    :`SimpleTypeName` `SP` `Identifier` [`Mixins`]
     SimpleTypeName          :%s"blob" / %s"boolean" / %s"document" / %s"string"
                             :/ %s"byte" / %s"short" / %s"integer" / %s"long"
@@ -194,31 +191,17 @@ string support defined in :rfc:`7405`.
     EnumTypeName            :%s"enum" / %s"intEnum"
     EnumShapeMembers        :"{" [`WS`] 1*(`TraitStatements` `Identifier` [`ValueAssignment`] [`WS`]) "}"
     ValueAssignment         :[`SP`] "=" [`SP`] `NodeValue` [`SP`] [`Comma`] `BR`
-    ListStatement           :%s"list" `SP` `Identifier` [`Mixins`] [`WS`] `ListMembers`
-    ListMembers             :"{" [`WS`] [`ListMember`] [`WS`] "}"
-    ListMember              :`TraitStatements` (`ElidedListMember` / `ExplicitListMember`)
-    ElidedListMember        :%s"$member"
-    ExplicitListMember      :%s"member" [`SP`] ":" [`SP`] `ShapeId`
-    MapStatement            :%s"map" `SP` `Identifier` [`Mixins`] [`WS`] `MapMembers`
-    MapMembers              :"{" [`WS`] [`MapKey` / `MapValue` / (`MapKey` `WS` `MapValue`)] [`WS`] "}"
-    MapKey                  :`TraitStatements` (`ElidedMapKey` / `ExplicitMapKey`)
-    MapValue                :`TraitStatements` (`ElidedMapValue` / `ExplicitMapValue`)
-    ElidedMapKey            :%s"$key"
-    ExplicitMapKey          :%s"key" [`SP`] ":" [`SP`] `ShapeId`
-    ElidedMapValue          :%s"$value"
-    ExplicitMapValue        :%s"value" [`SP`] ":" [`SP`] `ShapeId`
+    AggregateShapeStatement :`AggregateTypeName` `SP` `Identifier` [`Mixins`] `ShapeMembers`
+    AggregateTypeName       :%s"list" / %s"map" / %s"union"
     StructureStatement      :%s"structure" `SP` `Identifier` [`StructureResource`]
-                            :        [`Mixins`] [`WS`] `StructureMembers`
+                            :        [`Mixins`] [`WS`] `ShapeMembers`
     StructureResource       :`SP` %s"for" `SP` `ShapeId`
-    StructureMembers        :"{" [`WS`] *(`TraitStatements` `StructureMember` [`WS`]) "}"
-    StructureMember         :(`ExplicitStructureMember` / `ElidedStructureMember`) [`ValueAssignment`]
-    ExplicitStructureMember :`Identifier` [`SP`] ":" [`SP`] `ShapeId`
-    ElidedStructureMember   :"$" `Identifier`
-    UnionStatement          :%s"union" `SP` `Identifier` [`Mixins`] [`WS`] `UnionMembers`
-    UnionMembers            :"{" [`WS`] *(`TraitStatements` `UnionMember` [`WS`]) "}"
-    UnionMember             :(`ExplicitStructureMember` / `ElidedStructureMember`)
-    ServiceStatement        :%s"service" `SP` `Identifier` [`Mixins`] [`WS`] `NodeObject`
-    ResourceStatement       :%s"resource" `SP` `Identifier` [`Mixins`] [`WS`] `NodeObject`
+    ShapeMembers            :"{" [`WS`] *(`TraitStatements` `ShapeMember` [`WS`]) "}"
+    ShapeMember             :(`ExplicitShapeMember` / `ElidedShapeMember`) [`ValueAssignment`]
+    ExplicitShapeMember     :`Identifier` [`SP`] ":" [`SP`] `ShapeId`
+    ElidedShapeMember       :"$" `Identifier`
+    EntityStatement         :`EntityTypeName` `SP` `Identifier` [`Mixins`] [`WS`] `NodeObject`
+    EntityTypeName          :%s"service" / %s"resource"
     OperationStatement      :%s"operation" `SP` `Identifier` [`Mixins`] [`WS`] `OperationBody`
     OperationBody           :"{" [`WS`]
                             :    *(`OperationInput` / `OperationOutput` / `OperationErrors`)
@@ -228,7 +211,7 @@ string support defined in :rfc:`7405`.
     OperationOutput         :%s"output" [`WS`] (`InlineStructure` / (":" [`WS`] `ShapeId`))
     OperationErrors         :%s"errors" [`WS`] ":" [`WS`] "[" [`WS`] *(`ShapeId` [`WS`]) "]"
     InlineStructure         :":=" [`WS`] `TraitStatements` [`StructureResource`]
-                            :        [`Mixins`] [`WS`] `StructureMembers`
+                            :        [`Mixins`] [`WS`] `ShapeMembers`
 
 .. rubric:: Traits
 
@@ -896,7 +879,7 @@ The above intEnum is exactly equivalent to the following intEnum:
 List shapes
 -----------
 
-A :ref:`list <list>` shape is defined using a :token:`smithy:ListStatement`.
+A :ref:`list <list>` shape is defined using a :token:`smithy:AggregateShapeStatement`.
 
 The following example defines a list with a string member from the
 :ref:`prelude <prelude>`:
@@ -977,7 +960,7 @@ Traits can be applied to the list shape and its member:
 Map shapes
 ----------
 
-A :ref:`map <map>` shape is defined using a :token:`smithy:MapStatement`.
+A :ref:`map <map>` shape is defined using a :token:`smithy:AggregateShapeStatement`.
 
 The following example defines a map of strings to integers:
 
@@ -1187,7 +1170,7 @@ Is exactly equivalent to:
 Union shapes
 ------------
 
-A :ref:`union <union>` shape is defined using a :token:`smithy:UnionStatement`.
+A :ref:`union <union>` shape is defined using a :token:`smithy:AggregateShapeStatement`.
 
 The following example defines a union shape with several members:
 
@@ -1241,7 +1224,7 @@ The following example defines a union shape with several members:
 Service shape
 -------------
 
-A service shape is defined using a :token:`smithy:ServiceStatement` and the provided
+A service shape is defined using a :token:`smithy:EntityStatement` and the provided
 :token:`smithy:NodeObject` supports the same properties defined in the
 :ref:`service specification <service>`.
 
@@ -1447,7 +1430,7 @@ The suffixes for the generated names can be customized using the
 Resource shape
 --------------
 
-A resource shape is defined using a :token:`smithy:ResourceStatement` and the
+A resource shape is defined using a :token:`smithy:EntityStatement` and the
 provided :token:`smithy:NodeObject` supports the same properties defined in the
 :ref:`resource specification <resource>`.
 
