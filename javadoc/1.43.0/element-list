@@ -6,6 +6,7 @@ software.amazon.smithy.aws.cloudformation.schema.fromsmithy.mappers
 software.amazon.smithy.aws.cloudformation.schema.model
 software.amazon.smithy.aws.cloudformation.traits
 software.amazon.smithy.aws.iam.traits
+software.amazon.smithy.aws.smoketests.model
 software.amazon.smithy.aws.traits
 software.amazon.smithy.aws.traits.auth
 software.amazon.smithy.aws.traits.clientendpointdiscovery
