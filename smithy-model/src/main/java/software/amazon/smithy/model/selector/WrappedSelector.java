@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -62,13 +63,19 @@ final class WrappedSelector implements Selector {
 
     @Override
     public Set<Shape> select(Model model) {
-        if (isParallel(model)) {
+        return select(model, StartingContext.DEFAULT);
+    }
+
+    @Override
+    public Set<Shape> select(Model model, StartingContext startingContext) {
+        Collection<? extends Shape> startingShapes = getStartingShapes(model, startingContext);
+
+        if (isParallel(startingShapes)) {
             return shapes(model).collect(Collectors.toSet());
         } else {
+            // This is more optimized than using shapes() for smaller models that aren't parallelized.
             Set<Shape> result = new HashSet<>();
-            // This is more optimized than using shapes() for smaller models
-            // that aren't parallelized.
-            pushShapes(model, (ctx, s) -> {
+            pushShapes(model, startingShapes, (ctx, s) -> {
                 result.add(s);
                 return InternalSelector.Response.CONTINUE;
             });
@@ -76,32 +83,49 @@ final class WrappedSelector implements Selector {
         }
     }
 
+    private Collection<? extends Shape> getStartingShapes(Model model, StartingContext startingContext) {
+        Collection<? extends Shape> startingShapes = startingContext.getStartingShapes();
+        return startingShapes == null ? delegate.getStartingShapes(model) : startingShapes;
+    }
+
+    private boolean isParallel(Collection<? extends Shape> startingShapes) {
+        return startingShapes.size() >= PARALLEL_THRESHOLD;
+    }
+
     @Override
     public void consumeMatches(Model model, Consumer<ShapeMatch> shapeMatchConsumer) {
+        consumeMatches(model, StartingContext.DEFAULT, shapeMatchConsumer);
+    }
+
+    @Override
+    public void consumeMatches(Model model, StartingContext context, Consumer<ShapeMatch> shapeMatchConsumer) {
         // This is more optimized than using matches() and collecting to a Set
         // because it avoids creating streams and buffering the result of
         // pushing each shape into internal selectors.
-        pushShapes(model, (ctx, s) -> {
+        Collection<? extends Shape> startingShapes = getStartingShapes(model, context);
+        pushShapes(model, startingShapes, (ctx, s) -> {
             shapeMatchConsumer.accept(new ShapeMatch(s, ctx.getVars()));
             return InternalSelector.Response.CONTINUE;
         });
     }
 
     @Override
-    public Stream<Shape> shapes(Model model) {
+    public Stream<Shape> shapes(Model model, StartingContext startingContext) {
+        Collection<? extends Shape> startingShapes = getStartingShapes(model, startingContext);
         NeighborProviderIndex index = NeighborProviderIndex.of(model);
         List<Set<Shape>> computedRoots = computeRoots(model);
-        return streamStartingShape(model).flatMap(shape -> {
+        return streamStartingShapes(startingShapes).flatMap(shape -> {
             Context context = new Context(model, index, computedRoots);
             return delegate.pushResultsToCollection(context, shape, new ArrayList<>()).stream();
         });
     }
 
     @Override
-    public Stream<ShapeMatch> matches(Model model) {
+    public Stream<ShapeMatch> matches(Model model, StartingContext startingContext) {
+        Collection<? extends Shape> startingShapes = getStartingShapes(model, startingContext);
         NeighborProviderIndex index = NeighborProviderIndex.of(model);
         List<Set<Shape>> computedRoots = computeRoots(model);
-        return streamStartingShape(model).flatMap(shape -> {
+        return streamStartingShapes(startingShapes).flatMap(shape -> {
             List<ShapeMatch> result = new ArrayList<>();
             delegate.push(new Context(model, index, computedRoots), shape, (ctx, s) -> {
                 result.add(new ShapeMatch(s, ctx.getVars()));
@@ -109,6 +133,10 @@ final class WrappedSelector implements Selector {
             });
             return result.stream();
         });
+    }
+
+    private Stream<? extends Shape> streamStartingShapes(Collection<? extends Shape> startingShapes) {
+        return isParallel(startingShapes) ? startingShapes.parallelStream() : startingShapes.stream();
     }
 
     // Eagerly compute roots over all model shapes before evaluating shapes one at a time.
@@ -143,23 +171,16 @@ final class WrappedSelector implements Selector {
         return captures;
     }
 
-    private void pushShapes(Model model, InternalSelector.Receiver acceptor) {
+    private void pushShapes(
+            Model model,
+            Collection<? extends Shape> startingShapes,
+            InternalSelector.Receiver acceptor
+    ) {
+        Objects.requireNonNull(startingShapes);
         Context context = new Context(model, NeighborProviderIndex.of(model), computeRoots(model));
-        Collection<? extends Shape> shapes = delegate.getStartingShapes(model);
-        for (Shape shape : shapes) {
+        for (Shape shape : startingShapes) {
             context.getVars().clear();
             delegate.push(context, shape, acceptor);
         }
-    }
-
-    private Stream<? extends Shape> streamStartingShape(Model model) {
-        Collection<? extends Shape> startingShapes = delegate.getStartingShapes(model);
-        return startingShapes.size() > PARALLEL_THRESHOLD
-               ? startingShapes.parallelStream()
-               : startingShapes.stream();
-    }
-
-    private boolean isParallel(Model model) {
-        return model.getShapeIds().size() >= PARALLEL_THRESHOLD;
     }
 }

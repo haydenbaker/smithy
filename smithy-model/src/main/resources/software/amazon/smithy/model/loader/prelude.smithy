@@ -106,7 +106,7 @@ structure TraitDiffRule {
     change: TraitChangeType
 
     /// Defines the severity of the change. Defaults to ERROR if not defined.
-    severity: TraitChangeSeverity = "ERROR"
+    severity: Severity = "ERROR"
 
     /// Provides a reason why the change is potentially backward incompatible.
     message: String
@@ -131,7 +131,7 @@ enum TraitChangeType {
 }
 
 @private
-enum TraitChangeSeverity {
+enum Severity {
     /// A minor infraction occurred.
     NOTE
 
@@ -218,6 +218,7 @@ structure protocolDefinition {
     traits: TraitShapeIdList
 
     /// Set to true if inline documents are not supported by this protocol.
+    @deprecated(message: "Use the `@constrainShapes` trait instead")
     noInlineDocumentSupport: Boolean
 }
 
@@ -302,6 +303,49 @@ structure httpApiKeyAuth {
     /// Defines the security scheme to use in the ``Authorization`` header.
     /// This can only be set if the "in" property is set to ``header``.
     scheme: NonEmptyString
+}
+
+/// A meta-trait used to apply validation to a specific shape in the model that a trait is applied to.
+///
+/// `traitValidators` is a map of validation event IDs to validators to apply to a shape.
+/// Selectors are used to identify shapes that are incompatible with a constrained trait.
+///
+/// The following example defines a protocol that does not support document types. Each matching member found in the
+/// closure of an attached shape emits a validation event:
+///
+/// ```
+/// @trait(selector: "service")
+/// @traitValidators(
+///     "myCustomProtocol.NoDocuments": {
+///         selector: "member :test(> document)"
+///         message: "This protocol does not support document types"
+///     }
+/// )
+/// @protocolDefinition
+/// structure myCustomProtocol {}
+/// ```
+@trait(selector: "[trait|trait]")
+map traitValidators {
+    /// The validation event ID to emit when the constraint finds an incompatible shape.
+    @length(min: 1)
+    key: String
+
+    /// The validator to apply.
+    value: TraitValidator
+}
+
+@internal
+structure TraitValidator {
+    /// A Smithy selector that receives only the shape to which the `traitValidators` trait is applied.
+    /// Any shape yielded by the selector is considered incompatible with the trait.
+    @required
+    selector: String
+
+    /// A message to use when a matching shape is found.
+    message: String
+
+    /// The severity to use when a matching shape is found.
+    severity: Severity = "ERROR"
 }
 
 /// Provides a structure member with a default value. When added to root
